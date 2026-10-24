@@ -269,6 +269,19 @@ export interface ModexBridge {
   platform: string;
 }
 
+export interface BackendHealth {
+  executable: "available" | "missing" | "unknown";
+  authentication: "authenticated" | "signed-out" | "unsupported" | "unknown" | "failed";
+  /** A catalogue or account check does not demonstrate model entitlement. */
+  access: "unverified";
+  detail: string;
+}
+
+export interface ClaudeLoginResult {
+  status: "authenticated" | "busy" | "unsupported" | "failed" | "timeout" | "cancelled";
+  detail: string;
+}
+
 export interface BridgeCommands {
   "state:get": { req: undefined; res: AppState };
   "project:add": { req: { path?: string } | undefined; res: Project | null };
@@ -288,7 +301,9 @@ export interface BridgeCommands {
   /** One tiny judge request through the active transport. */
   "routing:test": { req: undefined; res: RoutingTest };
   "models:list": { req: { backend: BackendId }; res: { models: ModelInfo[]; error?: string } };
-  "backends:health": { req: undefined; res: Record<BackendId, { ok: boolean; detail: string }> };
+  "backends:health": { req: undefined; res: Record<BackendId, BackendHealth> };
+  "claude:login": { req: undefined; res: ClaudeLoginResult };
+  "claude:cancelLogin": { req: undefined; res: void };
   "thread:delete": { req: { threadId: string; removeWorktree?: boolean }; res: AppState };
   /** A project checkout's current branch, for a draft's context strip; null outside a git repository. */
   "project:branch": { req: { projectId: string }; res: string | null };

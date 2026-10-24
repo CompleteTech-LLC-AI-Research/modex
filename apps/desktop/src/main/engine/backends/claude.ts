@@ -2,6 +2,7 @@ import { generateTitle } from "../titles.js";
 import { spawn, type ChildProcess } from "node:child_process";
 import type { Backend, ModelInfo, TurnOptions, TurnResult, TurnSink } from "./types.js";
 import { LineBuffer, shortJson } from "./types.js";
+import { health, installation, probe } from "./health.js";
 
 /**
  * Drives the Claude Code CLI (`claude -p`) over its stream-json protocol:
@@ -27,6 +28,20 @@ export class ClaudeBackend implements Backend {
 
   async listModels(): Promise<ModelInfo[]> {
     return ClaudeBackend.MODELS;
+  }
+
+  async health() {
+    const unavailable = await installation(this.bin, this.spawnImpl);
+    if (unavailable) return unavailable;
+    const result = await probe(this.bin, ["auth", "status"], this.spawnImpl);
+    if (result.failure) return health("failed", result.failure === "timeout" ? "Account check timed out" : "Account check failed");
+    try {
+      const account = JSON.parse(result.output) as { loggedIn?: unknown; authMethod?: unknown };
+      const source = account.authMethod === "claude.ai" ? "Claude subscription" : ["api_key", "api_key_helper"].includes(String(account.authMethod)) ? "API credentials" : account.authMethod === "third_party" ? "Third-party provider" : "CLI account";
+      if (account.loggedIn === true) return health("authenticated", `Signed in · ${source} · model access unverified`);
+      if (account.loggedIn === false) return health("signed-out", "Signed out · run claude auth login");
+    } catch { /* Older CLIs do not provide structured account status. */ }
+    return health("unknown", "Account status unavailable · check in Claude CLI");
   }
 
   async dispose(): Promise<void> {}

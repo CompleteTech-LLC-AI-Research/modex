@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { BackendId, EffortLevel, Mode, ModelInfo, RoutingPolicy, RoutingStatus, RoutingTest, Settings } from "../../shared/types";
+import type { BackendHealth, BackendId, EffortLevel, Mode, ModelInfo, RoutingPolicy, RoutingStatus, RoutingTest, Settings } from "../../shared/types";
 import { BACKENDS, EFFORT_LEVELS, MODES } from "../../shared/types";
 import { sameJudgeSettings, testMatchesJudge } from "../../shared/judge-settings";
 import { bridge } from "../bridge";
@@ -58,7 +58,11 @@ export function SettingsDialog({ settings, onSave, onClose }: Props) {
     };
   }, []);
   const [s, setS] = useState<Settings>(settings);
-  const [health, setHealth] = useState<Record<BackendId, { ok: boolean; detail: string }> | null>(null);
+  const [health, setHealth] = useState<Record<BackendId, BackendHealth> | null>(null);
+  const [healthRevision, setHealthRevision] = useState(0);
+  const [claudeLoginBusy, setClaudeLoginBusy] = useState(false);
+  const [claudeLoginDetail, setClaudeLoginDetail] = useState("");
+  const claudeLoginRef = useRef(false);
   const [lists, setLists] = useState<Partial<Record<BackendId, { models: ModelInfo[]; error?: string }>>>({});
   const [routing, setRouting] = useState<RoutingStatus | null>(null);
   const [routingError, setRoutingError] = useState<string | null>(null);
@@ -77,7 +81,13 @@ export function SettingsDialog({ settings, onSave, onClose }: Props) {
   dismissRef.current = () => { if (!dismissBlockedRef.current) closeRef.current(); };
 
   useEffect(() => {
-    void bridge.invoke("backends:health", undefined).then(setHealth).catch(() => setHealth(null));
+    let current = true;
+    setHealth(null);
+    void bridge.invoke("backends:health", undefined).then((result) => { if (current) setHealth(result); }).catch(() => { if (current) setHealth(null); });
+    return () => { current = false; };
+  }, [healthRevision]);
+
+  useEffect(() => {
     const request = ++routingStatusRequestRef.current;
     void bridge.invoke("routing:status", undefined)
       .then((status) => { if (request === routingStatusRequestRef.current) { setRouting(status); setRoutingError(null); } })
@@ -257,16 +267,30 @@ export function SettingsDialog({ settings, onSave, onClose }: Props) {
         </section>}
         {section === "clis" && <section id="settings-clis" aria-labelledby="settings-clis-title" className="settings-section">
           <h3 id="settings-clis-title">Coding CLIs</h3>
+          <button type="button" disabled={claudeLoginBusy || s.claude_bin !== settings.claude_bin} onClick={async () => {
+            if (claudeLoginRef.current) return;
+            claudeLoginRef.current = true;
+            setClaudeLoginBusy(true);
+            setClaudeLoginDetail("Waiting for Claude Code sign-in. Complete the browser flow; opening the browser does not confirm login.");
+            try { const result = await bridge.invoke("claude:login", undefined); setClaudeLoginDetail(result.detail); }
+            catch { setClaudeLoginDetail("Could not start Claude sign-in. Check the configured executable."); }
+            finally { claudeLoginRef.current = false; setClaudeLoginBusy(false); setHealthRevision((revision) => revision + 1); }
+          }}>Sign in to Claude Code</button>
+          {claudeLoginBusy && <button type="button" onClick={() => { void bridge.invoke("claude:cancelLogin", undefined); }}>Cancel sign-in</button>}
+          <p role="status">{claudeLoginDetail}</p>
+          <p className="hint">Sign-in applies immediately to the saved CLI path and is shared with other Claude Code clients. It remains applied if you cancel Settings. Claude owns credentials; API or enterprise configuration may take precedence. For manual-input recovery, run claude auth login in your terminal. No logout or account-switch action is provided.</p>
+          <button type="button" onClick={() => setHealthRevision((revision) => revision + 1)}>Refresh account status</button>
+          <p className="hint">Checks the saved executable paths used by this app session. Model catalogues do not confirm account access. Path changes require a restart.</p>
         <div className="grid2">
           <label className="field">
             <span>Claude executable</span>
             <input value={s.claude_bin} onChange={(e) => set("claude_bin", e.target.value)} spellCheck={false} />
-            <small className={health?.claude.ok ? "ok" : "warn"}>{health ? (health.claude.ok ? `ready · ${health.claude.detail}` : health.claude.detail) : "checking…"}</small>
+            <small className={health?.claude.authentication === "authenticated" ? "ok" : "warn"}>{s.claude_bin !== settings.claude_bin ? "Path changed · save and restart to check" : health ? health.claude.detail : "checking…"}</small>
           </label>
           <label className="field">
             <span>Codex executable</span>
             <input value={s.codex_bin} onChange={(e) => set("codex_bin", e.target.value)} spellCheck={false} />
-            <small className={health?.codex.ok ? "ok" : "warn"}>{health ? (health.codex.ok ? `ready · ${health.codex.detail}` : health.codex.detail) : "checking…"}</small>
+            <small className={health?.codex.authentication === "authenticated" ? "ok" : "warn"}>{s.codex_bin !== settings.codex_bin ? "Path changed · save and restart to check" : health ? health.codex.detail : "checking…"}</small>
           </label>
         </div>
         <div className="grid2">

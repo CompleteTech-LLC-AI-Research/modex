@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Store } from "./engine/store.js";
 import { updateSettings } from "./engine/settings-update.js";
 import { ThreadRunner } from "./engine/runner.js";
+import { ClaudeLogin } from "./engine/claude-login.js";
 import * as gitx from "./engine/git.js";
 import { runDemo } from "./engine/demo.js";
 import { openTerminal } from "./engine/open-terminal.js";
@@ -152,6 +153,11 @@ handle("changes:revert", async ({ threadId, path: rel }) => {
 });
 handle("settings:update", (patch) => updateSettings(store, runner.router, patch));
 handle("models:list", ({ backend }) => runner.listModels(backend));
+const claudeLogin = new ClaudeLogin();
+const sessionClaudeBin = store.settings.claude_bin;
+SPAWNS.add("claude:login");
+handle("claude:login", () => claudeLogin.run(sessionClaudeBin));
+handle("claude:cancelLogin", () => claudeLogin.cancel());
 handle("routing:status", () => runner.router.status());
 handle("routing:reset", () => {
   runner.router.fit.reset();
@@ -161,12 +167,12 @@ handle("routing:setKey", ({ key }) => runner.router.setKey(key));
 handle("routing:clearKey", () => runner.router.clearKey());
 handle("routing:test", () => runner.router.test());
 handle("backends:health", async () => {
-  const out = {} as Record<BackendId, { ok: boolean; detail: string }>;
-  for (const id of ["claude", "codex", "mock"] as BackendId[]) {
-    const r = await runner.listModels(id);
-    out[id] = r.error ? { ok: false, detail: r.error } : { ok: true, detail: `${r.models.length} model${r.models.length === 1 ? "" : "s"}` };
-  }
-  return out;
+  const entries = await Promise.all((["claude", "codex", "mock"] as BackendId[]).map(async (id) => {
+    const backend = runner.backend(id);
+    const status = backend.health ? await backend.health() : { executable: "available" as const, authentication: "unknown" as const, access: "unverified" as const, detail: "Offline demo · no account" };
+    return [id, status] as const;
+  }));
+  return Object.fromEntries(entries) as BridgeCommands["backends:health"]["res"];
 });
 handle("shell:openPath", async ({ path: p }) => {
   const err = await shell.openPath(p);
@@ -253,6 +259,7 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin" || screenshotDir) app.quit();
 });
 app.on("before-quit", (event) => {
+  claudeLogin.cancel();
   if (shutdownComplete) return;
   event.preventDefault();
   if (shuttingDown) return;

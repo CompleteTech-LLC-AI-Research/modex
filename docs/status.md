@@ -40,6 +40,15 @@ the `Release` workflow, behind the `release-signing` reviewer → GitHub release
 
 ## In flight
 
+- **Claude sign-in (#77, depends on #75).** Settings can launch the saved Claude CLI's
+  browser login, cancel its own attempt, and verify structured account status afterward.
+  Credentials remain CLI-owned; account source and unverified model access are visible.
+  Terminal login remains the recovery path for older CLIs or manual-input flows.
+
+- **Account readiness (#75).** Settings now checks CLI availability and structured account
+  status separately from model catalogues. Authentication does not imply model entitlement;
+  status checks do not run a coding turn. Older or unresponsive CLIs report unknown status.
+
 - **Approval rules (Jev-gated).** Part 1 (#54) merged with the gate off and no UI: every
   backend's approval request carries an action, `engine/approvals/digest.ts` builds the
   scrubbed state Jev sees, and `engine/approvals/gate.ts` decides allow, ask or never. Part 2
