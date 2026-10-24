@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modex · The decision flow</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{color-scheme:dark;--bg:#0b1013;--panel:#11191e;--ink:#e8eeed;--muted:#98aaa9;--mint:#a3ebc5;--line:#28373d}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 'DM Sans',sans-serif;background-image:radial-gradient(ellipse at 85% 0%,#19342c80,transparent 45%)}main{max-width:1320px;margin:auto;padding:34px 48px 70px}nav{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:22px}.brand{font-family:Manrope,sans-serif;font-weight:800;letter-spacing:-1px;font-size:23px}.brand span{color:var(--mint)}nav a{color:var(--muted);text-decoration:none;font-size:12px;margin-left:22px}nav a:hover{color:var(--mint)}.eyebrow{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mint)}header{padding:76px 0 45px;max-width:820px}h1{font:500 clamp(40px,6vw,76px)/1.08 Manrope,sans-serif;letter-spacing:-3px;margin:18px 0 24px}h1 em{font-style:normal;color:var(--mint)}header p{color:var(--muted);font-size:18px;max-width:670px}.legend{display:flex;flex-wrap:wrap;gap:24px;font-size:12px;color:var(--muted);margin:25px 0 44px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--mint)}.blue{background:#9dcaf3}.amber{background:#e9be7a}.section{scroll-margin-top:24px;margin-bottom:26px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(125deg,#15221e50,transparent 45%),var(--panel);overflow:hidden}.section-head{display:flex;gap:22px;padding:28px 32px 0;align-items:flex-start}.number{font:500 13px Manrope,sans-serif;color:var(--mint);border:1px solid #3a594d;padding:7px 11px;border-radius:50%}h2{font:600 24px/1.3 Manrope,sans-serif;letter-spacing:-.6px;margin:0 0 8px}.section-head p{margin:0;color:var(--muted);max-width:790px}.diagram{padding:24px 28px 28px;overflow-x:auto;min-height:160px}.diagram svg{display:block;margin:auto;max-width:100%;height:auto}.note{padding:15px 32px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:20px}.note strong{color:var(--ink);font-weight:500}button{border:1px solid #3a504b;border-radius:6px;background:transparent;color:var(--mint);padding:6px 12px;cursor:pointer;white-space:nowrap}button:hover{background:#243c32}button:focus-visible,a:focus-visible{outline:2px solid var(--mint);outline-offset:4px}.foot{display:flex;justify-content:space-between;gap:25px;color:var(--muted);font-size:12px;margin-top:35px}.error{color:#e9be7a;padding:20px}.source{font-family:monospace;white-space:pre;overflow:auto;display:none;color:var(--muted);padding:20px 30px;font-size:12px}.source.open{display:block}footer strong{color:var(--mint)}@media(max-width:700px){main{padding:24px 18px 40px}nav a{margin-left:12px}header{padding-top:48px}h1{letter-spacing:-1.6px}.section-head{padding:24px 18px 0;gap:12px}.diagram{padding:20px 12px}.diagram svg{min-width:650px}.note{padding:14px 18px}.foot{flex-direction:column}h2{font-size:21px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body><main>
+<nav><div class="brand">modex<span> / </span>atlas</div><div><a href="#routing">Routing</a><a href="#execution">Execution</a><a href="#approvals">Approvals</a></div></nav>
+<header><div class="eyebrow">Architecture / JEV integration</div><h1>A request.<br>A judgment.<br><em>A deliberate next step.</em></h1><p>How Modex turns a request into a coding turn, and where JEV informs the decisions along the way.</p></header>
+<div class="legend"><span><i class="dot"></i>JEV judgment & policy</span><span><i class="dot blue"></i>Coding agent & execution</span><span><i class="dot amber"></i>Fallback & human review</span></div>
+<section class="section" id="routing"><div class="section-head"><span class="number">01</span><div><h2>Route the request</h2><p>Auto asks JEV for typed judgments. Local policy converts those judgments into a backend, model, reasoning effort, and fast-mode choice.</p></div></div><div class="diagram" data-chart="routing"></div><pre class="source"></pre><div class="note"><span><strong>Session continuity matters.</strong> Backend switching requires permission in policy and no existing CLI session.</span><button data-source>View Mermaid</button></div></section>
+<section class="section" id="execution"><div class="section-head"><span class="number">02</span><div><h2>Let the coding agent work</h2><p>Claude or Codex selects individual tools during the turn. JEV informs routing and approvals; the coding CLI runs the work.</p></div></div><div class="diagram" data-chart="execution"></div><pre class="source"></pre><div class="note"><span><strong>Routing privacy.</strong> JEV receives clipped request/history digests and project facts, without file contents, diffs, or tool output.</span><button data-source>View Mermaid</button></div></section>
+<section class="section" id="approvals"><div class="section-head"><span class="number">03</span><div><h2>Judge a proposed action</h2><p>The approval gate combines exact-match rules with optional JEV judgments, then applies safety downgrades before returning a decision.</p></div></div><div class="diagram" data-chart="approvals"></div><pre class="source"></pre><div class="note"><span><strong>Failure behavior.</strong> If JEV fails, only deterministic matches count. No matching rule defaults to asking the user.</span><button data-source>View Mermaid</button></div></section>
+<footer class="foot"><span><strong>Implementation map</strong> · routing/router.ts · routing/policy.ts · engine/runner.ts · approvals/gate.ts</span><span>Source snapshot · 04 October 2026 · Diagrams load Mermaid from CDN</span></footer>
+</main>
+<script type="module">
+const charts={
+routing:`flowchart LR
+ R["User request"] --> A{"Auto enabled?"}
+ A -->|No| P["Keep thread settings"]
+ A -->|Yes| D["Compact request digest"]
+ D --> J{"JEV available?"}
+ J -->|Yes| Q["Task · complexity · risk<br/>Speed · depth · history"]
+ J -->|No / error| H["Built-in heuristic"]
+ Q --> L["Local routing policy<br/>Confidence · limits · budget"]
+ H --> L
+ L --> C{"Limits can be honored?"}
+ C -->|Yes| O["Backend · model<br/>Effort · fast mode"]
+ C -->|No| B["Block turn<br/>Explain the limit"]
+ O --> T["Routing receipt + coding turn"]
+ P --> T
+ class D,J,Q,L,C mint
+ class O,T,P blue
+ class H,B amber`,
+execution:`flowchart LR
+ S["Selected route"] --> C["Claude / Codex CLI"]
+ C --> M["Coding model reasons<br/>and selects a tool"]
+ M --> A{"Approval requested?"}
+ A -->|Yes| G["Modex approval gate"]
+ G --> V{"Approval outcome"}
+ V -->|Allow| X["CLI executes tool"]
+ V -->|Ask| U["User review"]
+ U --> V
+ V -->|Deny| N["Return denial to CLI"]
+ A -->|No| X
+ X --> F["Tool result returned<br/>to coding model"]
+ N --> F
+ F --> E{"More work?"}
+ E -->|Yes| M
+ E -->|No| Z["Final answer + turn receipt"]
+ class S,C,M,A,X,F,E,Z,N blue
+ class G,V mint
+ class U amber`,
+approvals:`flowchart TD
+ A["Pending tool approval"] --> R{"Gate enabled + action<br/>+ applicable rules?"}
+ R -->|No| ASK["Ask the user"]
+ R -->|Yes| D["Evaluate deterministic matches"]
+ D --> J{"JEV available + semantic rules<br/>or deterministic allow?"}
+ J -->|Yes| Q["Action digest → JEV<br/>Rule probabilities + destructive risk"]
+ Q --> M["Add semantic hits above threshold<br/>On failure: keep deterministic hits only"]
+ J -->|No| C["Combine matching rules"]
+ M --> C
+ C --> O{"Winning decision?"}
+ O -->|No hit / Ask| ASK
+ O -->|Deny| DENY["Deny action"]
+ O -->|Allow| S{"Escalation or known<br/>destructive risk ≥ 0.5?"}
+ S -->|Yes| ASK
+ S -->|No| ALLOW["Allow action"]
+ class R,D,J,Q,M,C,O,S mint
+ class ASK amber
+ class A,DENY,ALLOW blue`
+};
+const classes='\nclassDef mint fill:#19382d,stroke:#76bc98,color:#e0f9eb,stroke-width:1.3px\nclassDef blue fill:#192c3b,stroke:#679cc1,color:#e1effa,stroke-width:1.3px\nclassDef amber fill:#3b3020,stroke:#b89660,color:#fae9cd,stroke-width:1.3px';
+document.querySelectorAll('.section').forEach(section=>{const chart=section.querySelector('.diagram');section.querySelector('.source').textContent=charts[chart.dataset.chart]+classes;section.querySelector('button').addEventListener('click',event=>{const open=section.querySelector('.source').classList.toggle('open');event.target.textContent=open?'Hide Mermaid':'View Mermaid';event.target.setAttribute('aria-expanded',String(open));});section.querySelector('button').setAttribute('aria-expanded','false');});
+try{
+ const {default:mermaid}=await import('https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.esm.min.mjs');
+ mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',themeVariables:{darkMode:true,background:'#11191e',primaryColor:'#19382d',primaryTextColor:'#e8eeed',primaryBorderColor:'#76bc98',lineColor:'#738c89',textColor:'#e8eeed',edgeLabelBackground:'#11191e',fontFamily:'DM Sans, sans-serif',fontSize:'14px'},flowchart:{curve:'basis',htmlLabels:false,nodeSpacing:32,rankSpacing:45,padding:18}});
+ for(const el of document.querySelectorAll('.diagram')){const {svg}=await mermaid.render('chart-'+el.dataset.chart,charts[el.dataset.chart]+classes);el.innerHTML=svg;const s=el.querySelector('svg');s.setAttribute('role','img');s.setAttribute('aria-label',el.closest('section').querySelector('h2').textContent);}
+}catch(error){document.querySelectorAll('.diagram').forEach(el=>{if(!el.querySelector('svg')){el.textContent='Diagram could not load. Connect to the internet and reload, or use View Mermaid to read the workflow source.';el.classList.add('error');}});console.error(error);}
+</script></body></html>
